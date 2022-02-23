@@ -16,6 +16,15 @@ const App = () => {
   console.log("Address: ", address);
 
   const [hasClaimedNFT, setHasClaimedNFT] = useState(false);
+  // keep state while an nft is minting
+  const [isClaiming, setIsClaiming] = useState(false);
+
+  const signer = provider ? provider.getSigner() : undefined;
+
+  useEffect(() => {
+    // We pass the signer to the sdk, which enables us to interact with our deployed contract!
+    sdk.setProviderOrSigner(signer);
+  }, [signer])
 
   useEffect(async () => {
     // No wallet connected
@@ -53,10 +62,37 @@ const App = () => {
     );
   }
 
-  // Wallet connected
+  if(hasClaimedNFT) {
+    return (
+      <div className="member-page">
+        <h1>🍅DAO Member Page</h1>
+        <p>Congratulations on being a member</p>
+      </div>
+    );
+  };
+
+  const mintNFT = async () => {
+    setIsClaiming(true);
+    try {
+      await bundleDropModule.claim("0", 1)
+      setHasClaimedNFT(true);
+      console.log(`🌊 Successfully Minted! Check it out on OpenSea: https://testnets.opensea.io/assets/${bundleDropModule.address}/0`);
+    } catch (error) {
+      console.error("failed to claim", error);
+    } finally {
+      setIsClaiming(false)
+    }
+  } 
+
   return (
-    <div className="landing">
-      <h1>Wallet Connected, Welcome to My DAO 👀 </h1>
+    <div className="mint-nft">
+      <h1>Mint your free 🍅DAO Membership NFT</h1>
+      <button
+        disabled={isClaiming}
+        onClick={() => mintNFT()}
+      >
+        {isClaiming ? "Minting..." : "Mint your nft (FREE)"}
+      </button>
     </div>
   );
 };
